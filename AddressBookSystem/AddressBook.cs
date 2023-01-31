@@ -58,6 +58,7 @@ namespace AddressBookSystem
                 Console.WriteLine(contact.firstName + " " +contact.lastName + " " + contact.email + " " + contact.phone + " " + contact.city + " " + contact.state + " " + contact.zipcode + "\n");
             }
         }
+
         public static void AddContact ()
         {
             char userChoice;
@@ -270,6 +271,40 @@ namespace AddressBookSystem
 
                 }
             }
+        }
+
+        public static void DeleteContact() // UC4 Delete contact based on first name
+        {
+            Console.Write("Enter First Name of contact that you want to delete : ");
+            string deleteReference = Console.ReadLine();
+
+            if(contacts.Count != 0)
+            {
+                foreach (Contact contact in contacts)
+                {
+                    if (contact.firstName == deleteReference)
+                    {
+                        Console.WriteLine("Contact to be deleted : {0} {1} {2} {3} {4} {5} {6}\n", contact.firstName, contact.lastName, contact.email, contact.phone.ToString(), contact.city, contact.state, contact.zipcode);
+
+                        Console.WriteLine("Ar you sure you want to delete y/n ?");
+                        char confirmation = Convert.ToChar(Console.ReadLine());
+
+                        if (confirmation == 'y')
+                        {
+                            contacts.Remove(contact);
+                        }
+                        else
+                            Prompt();
+
+                        Console.WriteLine("Contact has been removed");
+                    }
+                    else
+                        Console.WriteLine("Contact not found !");
+                }
+            }
+
+            else { Console.WriteLine("Address Book is empty."); }
+            
         }
     }
 }
