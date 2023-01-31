@@ -59,7 +59,7 @@ namespace AddressBookSystem
             }
         }
 
-        public static void AddContact ()
+        public static void AddContact () //UC2 Adding Contacts
         {
             char userChoice;
             do
@@ -103,7 +103,7 @@ namespace AddressBookSystem
                 Console.WriteLine("Do you want to create another contact y/n ?");
                 userChoice = Convert.ToChar(Console.ReadLine());
             } 
-            while (userChoice == 'y'); // UC2 Multiple contacts
+            while (userChoice == 'y'); // UC5 Multiple contacts
 
             Console.WriteLine("Available contacts ...\n");
             AddressBook.Display();
