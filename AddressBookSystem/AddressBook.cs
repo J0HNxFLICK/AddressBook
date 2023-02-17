@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Numerics;
+using System.Reflection.Emit;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -10,34 +13,61 @@ namespace AddressBookSystem
 {
     internal class AddressBook
     {
-        public static List<Contact> contacts = new List<Contact>();
+        //public static List<Contact> contacts = new List<Contact>();
 
+        public static Dictionary<string, List<Contact>> addressBooks = new Dictionary<string, List<Contact>>(); // UC6 Refactored to add multiple addressbooks 
+
+        public static void CreateAddressBooks()
+        {
+            Console.Write("How many Address Books you want to create : ");
+            int booksCount = Convert.ToInt32(Console.ReadLine());
+            Console.WriteLine("");
+
+            for (int i = 1; i <= booksCount; i++)
+            {
+                Console.Write("Enter {0} Address book name : ", i);
+                string key = Console.ReadLine();
+
+                if (!addressBooks.ContainsKey(key))
+                {
+                    addressBooks.Add(key, new List<Contact>());
+                }
+                else
+                    Console.WriteLine("Already contains an Address Book with entered name.");
+            }
+
+            Prompt();
+        }
         public static void Prompt()
         {
             Console.WriteLine("Do you want to perform other operations y/n ?");
             char promptChoice = Convert.ToChar(Console.ReadLine());
 
-            if(promptChoice == 'y')
+            if (promptChoice == 'y')
             {
-                Console.WriteLine("\n1 - Add Contact\n2 - Edit Existing Contact\n");
+                Console.WriteLine("\n1 - Create AddressBooks\n2 - List all AddressBooks\n3 - Add Contact\n4 - Edit Existing Contact\n5 - Delete Contact\n");
                 int promptUserChoice = Convert.ToInt32(Console.ReadLine());
 
-                switch(promptUserChoice)
+                switch (promptUserChoice)
                 {
                     case 1:
-                        AddContact();
+                        CreateAddressBooks();
                         break;
 
                     case 2:
-                        if (contacts.Count != 0)
-                        {
-                            EditContact();
-                        }
-                        else
-                        {
-                            Console.WriteLine("Address Book is empty.");
-                            Prompt();
-                        }
+                        ListAddressBooks();
+                        break;
+
+                    case 3:
+                        AddContact();
+                        break;
+
+                    case 4:
+                        EditContact();
+                        break;
+
+                    case 5:
+                        DeleteContact();
                         break;
 
                     default:
@@ -51,16 +81,70 @@ namespace AddressBookSystem
                 Console.WriteLine("Thank you for using Address Book program");
         }
 
-        public static void Display()
+        public static void Display(string addressBookName)
         {
+            if (!addressBooks.ContainsKey(addressBookName))
+            {
+                Console.WriteLine("Address book does not exist.");
+                return;
+            }
+
+            List<Contact> contacts = addressBooks[addressBookName];
+
+            if (contacts.Count == 0)
+            {
+                Console.WriteLine("Address book is empty.");
+                return;
+            }
+
+            Console.WriteLine("Contacts in {0} address book:\n", addressBookName);
+
             foreach (Contact contact in contacts)
             {
-                Console.WriteLine(contact.firstName + " " +contact.lastName + " " + contact.email + " " + contact.phone + " " + contact.city + " " + contact.state + " " + contact.zipcode + "\n");
+                Console.WriteLine(contact.firstName + " " + contact.lastName + " " + contact.email + " " + contact.phone + " " + contact.city + " " + contact.state + " " + contact.zipcode + " \n");
             }
         }
 
-        public static void AddContact () //UC2 Adding Contacts
+        public static void ListAddressBooks()
         {
+            if (addressBooks.Count == 0)
+            {
+                Console.WriteLine("No address books created yet.");
+                return;
+            }
+
+            Console.WriteLine("Available address books:\n");
+            foreach (string key in addressBooks.Keys)
+            {
+                Console.WriteLine(key);
+            }
+
+            Prompt();
+        }
+
+        public static void AddressBookDisplayer()
+        {
+            if (addressBooks.Count == 0)
+            {
+                Console.WriteLine("No address books created yet.");
+                return;
+            }
+
+            Console.WriteLine("Available address books:\n");
+            foreach (string key in addressBooks.Keys)
+            {
+                Console.WriteLine(key);
+            }
+        }
+
+        public static void AddContact() //UC2 Adding Contacts
+        {
+            AddressBookDisplayer();
+            Console.WriteLine("");
+            Console.Write("Which address book you want to add in : ");
+            string keyChoice = Console.ReadLine();
+            Console.WriteLine("");
+
             char userChoice;
             do
             {
@@ -94,42 +178,55 @@ namespace AddressBookSystem
                 int zipcodeNumb = Convert.ToInt32(Console.ReadLine());
                 Console.WriteLine("");
 
-                contacts.Add(new Contact { firstName = first, lastName= last, email = emailId, phone = phoneNumber, city = cityName, state = stateName, zipcode = zipcodeNumb } );
+                //contacts.Add(new Contact { firstName = first, lastName= last, email = emailId, phone = phoneNumber, city = cityName, state = stateName, zipcode = zipcodeNumb } );
 
-                Console.WriteLine("Contact Successfully created !\n");
+                addressBooks[keyChoice].Add(new Contact { firstName = first, lastName = last, email = emailId, phone = phoneNumber, city = cityName, state = stateName, zipcode = zipcodeNumb });
+
+                Console.WriteLine("Contact Successfully created in {0} address book !\n", keyChoice);
 
                 Console.WriteLine(first + " " + last + " " + emailId + " " + phoneNumber + " " + cityName + " " + stateName + " " + zipcodeNumb + " \n");
 
-                Console.WriteLine("Do you want to create another contact y/n ?");
+                Console.WriteLine("Do you want to create another contact in the same address book y/n ?");
                 userChoice = Convert.ToChar(Console.ReadLine());
-            } 
+            }
             while (userChoice == 'y'); // UC5 Multiple contacts
 
-            Console.WriteLine("Available contacts ...\n");
-            AddressBook.Display();
+            //Console.WriteLine("Available contacts ...\n");
+            //AddressBook.Display();
 
             Prompt();
-            
+
         }
 
         public static void EditContact() // UC3 Editing a contact based on first name
         {
+            AddressBookDisplayer();
+            Console.WriteLine("");
+            Console.Write("Which address book you want to edit contact in : ");
+            string keyChoiceEdit = Console.ReadLine();
+            Console.WriteLine("");
+
+            Display(keyChoiceEdit);
+
             Console.Write("Enter First Name of the contact you want to edit : \n");
             string nameInput = Console.ReadLine();
 
-            foreach (Contact contact in contacts)
+            Contact contact = null;
+            foreach (var c in addressBooks[keyChoiceEdit])
             {
-                if(contact.firstName == nameInput)
+                if (c.firstName.ToLower() == nameInput.ToLower())
                 {
+                    contact = c;
+
                     char choice;
-                    
-                        Console.WriteLine("First Name : " + contact.firstName);
-                        Console.WriteLine("Last Name : " + contact.lastName);
-                        Console.WriteLine("Email ID : " + contact.email);
-                        Console.WriteLine("Phone Number : " + contact.phone);
-                        Console.WriteLine("City : " + contact.city);
-                        Console.WriteLine("State : " + contact.state);
-                        Console.WriteLine("Zipcode : " + contact.zipcode);
+
+                    Console.WriteLine("First Name : " + contact.firstName);
+                    Console.WriteLine("Last Name : " + contact.lastName);
+                    Console.WriteLine("Email ID : " + contact.email);
+                    Console.WriteLine("Phone Number : " + contact.phone);
+                    Console.WriteLine("City : " + contact.city);
+                    Console.WriteLine("State : " + contact.state);
+                    Console.WriteLine("Zipcode : " + contact.zipcode);
 
                     do
                     {
@@ -239,7 +336,7 @@ namespace AddressBookSystem
 
                                 contact.firstName = newfirst;
                                 contact.lastName = newlast;
-                                contact.email = newEmailId; 
+                                contact.email = newEmailId;
                                 contact.phone = newPhone;
                                 contact.city = newCityName;
                                 contact.state = newStateName;
@@ -270,41 +367,53 @@ namespace AddressBookSystem
                     Prompt();
 
                 }
+
+                else
+                {
+                    Console.WriteLine("No contact with such name exists.");
+                    Prompt();
+                }
             }
         }
 
         public static void DeleteContact() // UC4 Delete contact based on first name
         {
-            Console.Write("Enter First Name of contact that you want to delete : ");
-            string deleteReference = Console.ReadLine();
+            AddressBookDisplayer();
+            Console.WriteLine("");
+            Console.Write("Which address book you want to edit contact in : ");
+            string keyChoiceDelete = Console.ReadLine();
+            Console.WriteLine("");
 
-            if(contacts.Count != 0)
+            Display(keyChoiceDelete);
+
+            Console.Write("Enter the first name of the contact to delete: ");
+            string firstName = Console.ReadLine();
+
+            Contact contact = null;
+
+            foreach (Contact c in addressBooks[keyChoiceDelete])
             {
-                foreach (Contact contact in contacts)
+                if (c.firstName.ToLower() == firstName.ToLower())
                 {
-                    if (contact.firstName == deleteReference)
-                    {
-                        Console.WriteLine("Contact to be deleted : {0} {1} {2} {3} {4} {5} {6}\n", contact.firstName, contact.lastName, contact.email, contact.phone.ToString(), contact.city, contact.state, contact.zipcode);
-
-                        Console.WriteLine("Ar you sure you want to delete y/n ?");
-                        char confirmation = Convert.ToChar(Console.ReadLine());
-
-                        if (confirmation == 'y')
-                        {
-                            contacts.Remove(contact);
-                        }
-                        else
-                            Prompt();
-
-                        Console.WriteLine("Contact has been removed");
-                    }
-                    else
-                        Console.WriteLine("Contact not found !");
+                    contact = c;
+                    break;
                 }
             }
 
-            else { Console.WriteLine("Address Book is empty."); }
-            
+            if (contact != null)
+            {
+                addressBooks[keyChoiceDelete].Remove(contact);
+                Console.WriteLine("Contact successfully deleted from the address book.\n");
+                Prompt();
+            }
+            else
+            {
+                Console.WriteLine("Contact not found. Please try again.\n");
+                Prompt();
+            }
+
+
         }
+
     }
 }

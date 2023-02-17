@@ -7,7 +7,7 @@
         {
             Console.WriteLine("Welcome to Address Book System Program");
 
-            AddressBook.AddContact();
+            AddressBook.CreateAddressBooks();
 
         }
     }
